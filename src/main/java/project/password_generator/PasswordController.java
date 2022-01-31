@@ -42,22 +42,14 @@ public class PasswordController implements Initializable {
             String newText = change.getControlNewText();
             if(newText.matches("([0-9][0-9]*)?")) {
                 return change;
-            }
-            //try-catch the text-fields. SpinnerFactory text-fields throw NullPointerException.
-            try {
-                switch(change.getControl().getId()){
-                    case "passwordLength":
+            } else {
+                try {
+                    if(change.getControl().getId().equals("passwordLength")) {
                         errorString.setText("Password length can not contain letters.");
-                        break;
-                    case "numSpinnerTextField":
-                        errorString.setText("Max-numbers must be a number.");
-                        break;
-                    case "uppSpinnerTextField":
-                        errorString.setText("Max-uppercase's must be a number.");
-                        break;
+                    }
+                } catch(Exception ex) {
+                    errorString.setText("Spinners can only handle numbers.");
                 }
-            } catch(NullPointerException ex) {
-                errorString.setText("The spinner will only handle numbers.");
             }
             return null;
         };
@@ -66,17 +58,17 @@ public class PasswordController implements Initializable {
 
         /*
             - configure spinners to accept realistic resolutions using SpinnerValueFactory
-            - ( minValue==0 // maxValue==50 // startValue==1 // incrementValue==5 )
+            - ( minValue==0 // maxValue==30 // startValue==0 // incrementValue==2 )
         */
-        SpinnerValueFactory<Integer> numSpinnerFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 50, 0, 5);
-        SpinnerValueFactory<Integer> uppSpinnerFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 50, 0, 5);
+        SpinnerValueFactory<Integer> numSpinnerFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 30, 0, 2);
+        SpinnerValueFactory<Integer> uppSpinnerFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 30, 0, 2);
         maxNumCount.setValueFactory(numSpinnerFactory);
         maxUpperCount.setValueFactory(uppSpinnerFactory);
 
         TextField numSpinnerTextField = maxNumCount.getEditor();
         TextField uppSpinnerTextField = maxUpperCount.getEditor();
 
-        //add listener to manNumCount and maxUpperCount to newly created text-fields.
+        //add integerFilter to manNumCount and maxUpperCount with the newly created text-fields.
         numSpinnerTextField.setTextFormatter(new TextFormatter<Integer>(new IntegerStringConverter(), 0, integerFilter));
         uppSpinnerTextField.setTextFormatter(new TextFormatter<Integer>(new IntegerStringConverter(), 0, integerFilter));
     }
@@ -119,7 +111,7 @@ public class PasswordController implements Initializable {
     }
 
 
-    
+
     private void captureUserSymbols() {
         /*
             - to be called on start to populate the boxArray
