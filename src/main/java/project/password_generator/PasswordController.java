@@ -24,7 +24,7 @@ public class PasswordController implements Initializable {
             lessThan, minus, oBracket, oCurly, oParenthesis, percent, period, pipe, plus, question, semiColon, tilde, underScore;
 
 
-    private Password thePassword;
+    private Password tempPassword = new Password();
     private CheckBox[] boxArray;
 
 
@@ -32,6 +32,11 @@ public class PasswordController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         System.out.println("APP STARTED ... ");
+        tempPassword.setLength(8);
+        tempPassword.setHasUppers(true);
+        tempPassword.setUpperMax(1);
+        tempPassword.setHasNumbers(true);
+        tempPassword.setNumberMax(1);
 
         //instantiating 1 box-array -- populate.
         boxArray = new CheckBox[32];
@@ -40,28 +45,31 @@ public class PasswordController implements Initializable {
         //Text-Formatter to be used on text-fields whose input must only be a number.
         UnaryOperator<TextFormatter.Change> integerFilter = change -> {
             String newText = change.getControlNewText();
+            //this regex also accounting for empty spacing
             if(newText.matches("([0-9][0-9]*)?")) {
                 return change;
             } else {
                 try {
                     if(change.getControl().getId().equals("passwordLength")) {
+                        displayString.setText("");
                         errorString.setText("Password length can not contain letters.");
                     }
                 } catch(Exception ex) {
+                    displayString.setText("");
                     errorString.setText("Spinners can only handle numbers.");
                 }
             }
             return null;
         };
         //declare integer-only TextField
-        passwordLength.setTextFormatter(new TextFormatter<Integer>(new IntegerStringConverter(), 0, integerFilter));
+        passwordLength.setTextFormatter(new TextFormatter<Integer>(new IntegerStringConverter(), tempPassword.getLength(), integerFilter));
 
         /*
             - configure spinners to accept realistic resolutions using SpinnerValueFactory
             - ( minValue==0 // maxValue==30 // startValue==0 // incrementValue==2 )
         */
-        SpinnerValueFactory<Integer> numSpinnerFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 30, 0, 2);
-        SpinnerValueFactory<Integer> uppSpinnerFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 30, 0, 2);
+        SpinnerValueFactory<Integer> numSpinnerFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(0, tempPassword.getLength(), tempPassword.getNumberMax(), 2);
+        SpinnerValueFactory<Integer> uppSpinnerFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(0, tempPassword.getLength(), tempPassword.getUpperMax(), 2);
         maxNumCount.setValueFactory(numSpinnerFactory);
         maxUpperCount.setValueFactory(uppSpinnerFactory);
 
@@ -69,30 +77,44 @@ public class PasswordController implements Initializable {
         TextField uppSpinnerTextField = maxUpperCount.getEditor();
 
         //add integerFilter to manNumCount and maxUpperCount with the newly created text-fields.
-        numSpinnerTextField.setTextFormatter(new TextFormatter<Integer>(new IntegerStringConverter(), 0, integerFilter));
-        uppSpinnerTextField.setTextFormatter(new TextFormatter<Integer>(new IntegerStringConverter(), 0, integerFilter));
+        numSpinnerTextField.setTextFormatter(new TextFormatter<Integer>(new IntegerStringConverter(), tempPassword.getNumberMax(), integerFilter));
+        uppSpinnerTextField.setTextFormatter(new TextFormatter<Integer>(new IntegerStringConverter(), tempPassword.getUpperMax(), integerFilter));
+
+        //pre-populate Upper and Number inputs
+        includeNumbers.setSelected(tempPassword.isUsingNumbers());
+        includeUppercase.setSelected(tempPassword.isUsingUppers());
     }
 
     @FXML
     void generateButton(ActionEvent event) {
         displayString.setText("");
         errorString.setText("");
-
-        //populate object variables
-        int length = Integer.parseInt(passwordLength.getText());
-        boolean hasUppers = includeUppercase.isSelected();
-        boolean hasNumbers = includeNumbers.isSelected();
-        int upperMax = maxUpperCount.getValue();
-        int numberMax = maxNumCount.getValue();
         String symbolString = symbolStringCreator(boxArray);
 
-        //instantiate new Password object and call function to generate password.
+        try {
+            //populate object variables
+            tempPassword.setLength(Integer.parseInt(passwordLength.getText()));
+            tempPassword.setHasUppers(includeUppercase.isSelected());
+            tempPassword.setHasNumbers(includeNumbers.isSelected());
+            tempPassword.setUpperMax(maxUpperCount.getValue());
+            tempPassword.setNumberMax(maxNumCount.getValue());
+            tempPassword.setSymbolString(symbolString);
 
-        //debug print lines
-        System.out.println("Length of.. " + length);
-        System.out.printf("hasUppers is %s with %d%n", hasUppers, upperMax);
-        System.out.printf("hasNumbers is %s with %d%n", hasNumbers, numberMax);
-        System.out.printf("symbols... %n%s%n", symbolString);
+            //instantiate new Password object and call function to generate password.
+            String thePassword = tempPassword.passwordCreator(tempPassword);
+            displayString.setText(thePassword);
+        } catch(Exception ex) {
+            displayString.setText("");
+            errorString.setText(ex.getMessage());
+        }
+
+        //QoL to inputs
+        if(tempPassword.getUpperMax() == 0){
+            includeUppercase.setSelected(false);
+        }
+        if(tempPassword.getNumberMax() == 0) {
+            includeNumbers.setSelected(false);
+        }
     }
 
     @FXML

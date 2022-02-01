@@ -18,20 +18,17 @@ public class Password {
     private boolean hasNumbers;
     private int upperMax;
     private int numberMax;
+    private String symbolString;
 
     //constructors
     public Password() {}
-    public Password(int length, boolean hasUppers, boolean hasNumbers) {
-        setLength(length);
-        setHasUppers(hasUppers);
-        setHasNumbers(hasNumbers);
-    }
-    public Password(int length, boolean hasUppers, boolean hasNumbers, int upperMax, int numberMax) {
+    public Password(int length, boolean hasUppers, boolean hasNumbers, int upperMax, int numberMax, String symbolString) {
         setLength(length);
         setHasUppers(hasUppers);
         setHasNumbers(hasNumbers);
         setUpperMax(upperMax);
         setNumberMax(numberMax);
+        setSymbolString(symbolString);
     }
 
     //setter and getter
@@ -64,9 +61,6 @@ public class Password {
             if(upperMax > getLength()){
                 throw new IllegalArgumentException("You want too many uppercase letters.  Try again.");
             }
-            if(upperMax < 1) {
-                throw new IllegalArgumentException("Uppercase input can not be less than one (1).");
-            }
             this.upperMax = upperMax;
         } else { this.upperMax = 0; }
     }
@@ -77,16 +71,21 @@ public class Password {
             if(numberMax > getLength()) {
                 throw new IllegalArgumentException("You want too many numbers.  Try again.");
             }
-            if(numberMax < 1) {
-                throw new IllegalArgumentException("Number input can not be less than one (1).");
-            }
             this.numberMax = numberMax;
         } else { this.numberMax = 0; }
     }
 
+    public String getSymbolString() {return symbolString;}
+    public void setSymbolString(String symbolString) {
+        this.symbolString = symbolString;
+    }
 
-    public String passwordCreator(int wantedLength, int upCount, int numCount, String symbolString) {
+    public String passwordCreator(Password password) {
         StringBuilder pw = new StringBuilder();
+        int wantedLength = password.getLength();
+        int upCount = password.getUpperMax();
+        int numCount = password.getNumberMax();
+        String symbolString = password.getSymbolString();
 
         boolean repeat = true;
         while(repeat) {
