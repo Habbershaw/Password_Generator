@@ -1,6 +1,10 @@
 package project.password_generator;
 
+import javafx.scene.control.CheckBox;
+
 import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class Password {
@@ -80,90 +84,19 @@ public class Password {
         this.symbolString = symbolString;
     }
 
-    public String passwordCreator(Password password) {
-        StringBuilder pw = new StringBuilder();
-        int wantedLength = password.getLength();
-        int upCount = password.getUpperMax();
-        int numCount = password.getNumberMax();
-        String symbolString = password.getSymbolString();
+    /**
+     * @return
+     * string of the user-desired symbols
+     */
+    public String captureSymbolString(CheckBox[] boxArray) {
+        StringBuilder symbols = new StringBuilder();
 
-        boolean repeat = true;
-        while(repeat) {
-            pw.delete(0, wantedLength);
-            int numCounter = 0, upperCounter = 0, lowerCounter = 0, symbolCounter = 0;
-
-            for(int i=0; i<wantedLength; i++) {
-                int switchPick = secRandom.nextInt(3);  //randomize characterType
-                switch(switchPick) {
-                    case 0:
-                        //SYMBOLs
-                        if(symbolCounter < lowerCounter) {
-                            if(!symbolString.isEmpty()) {
-                                int res = random.nextInt(symbolString.length());
-                                char symbol = symbolString.charAt(res);
-
-                                pw.append(symbol);  //appending symbol
-                                symbolCounter++;
-                                break;
-                            }
-                        }
-                    case 1:
-                        //NUMBERs
-                        if(hasNumbers){
-                            if(numCounter < numCount && numCounter <= lowerCounter) {
-                                int res = random.nextInt(NUMBERSTRING.length());
-                                char number = NUMBERSTRING.charAt(res);
-
-                                pw.append(number);  //appending number
-                                numCounter++;
-                                break;
-                            }
-                        }
-                    case 2:
-                        //UPPERs
-                        if(hasUppers) {
-                            if(upperCounter < upCount && upperCounter <= lowerCounter) {
-                                int res = random.nextInt(UPPERCASE.length());
-                                char upperLetter = UPPERCASE.charAt(res);
-
-                                pw.append(upperLetter);  //appending Uppercase Letter
-                                upperCounter++;
-                                break;
-                            }
-                        }
-                    default:
-                        //LOWERs
-                        if(symbolString.isEmpty()) {
-                            int res = random.nextInt(LOWERCASE.length());
-                            char lowerLetter = LOWERCASE.charAt(res);
-
-                            pw.append(lowerLetter);
-                            lowerCounter++;
-                        } else {
-                            //if symbols wanted, add possibility to add symbol instead
-                            if(lowerCounter < (symbolCounter * 3)) {
-                                int res = random.nextInt(LOWERCASE.length());
-                                char lowerLetter = LOWERCASE.charAt(res);
-
-                                pw.append(lowerLetter);
-                                lowerCounter++;
-                            } else {
-                                int res = random.nextInt(symbolString.length());  //random int based on size of the symbolString
-                                char symbol = symbolString.charAt(res);
-
-                                pw.append(symbol);  //append a symbol
-                                symbolCounter++;
-                            }
-                        }
-                }
+        for(CheckBox checkBox : boxArray) {
+            if(checkBox.isSelected()) {
+                symbols.append(checkBox.getText());
             }
-            char securityCheck = pw.charAt(0);
-            if(securityCheck == '_' || securityCheck == '.' || securityCheck == '%' || securityCheck == '$' || securityCheck == '#' || securityCheck == '@' || securityCheck == '<') {
-                repeat = true;
-            } else { repeat = false; }
         }
-        //if out of while loop -- return password
-        return pw.toString();
+        return symbols.toString();
     }
 
     @Override

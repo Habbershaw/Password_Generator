@@ -7,6 +7,8 @@ import javafx.scene.control.*;
 import javafx.util.converter.IntegerStringConverter;
 
 import java.net.URL;
+import java.security.SecureRandom;
+import java.util.Random;
 import java.util.ResourceBundle;
 import java.util.function.UnaryOperator;
 
@@ -24,7 +26,10 @@ public class PasswordController implements Initializable {
             lessThan, minus, oBracket, oCurly, oParenthesis, percent, period, pipe, plus, question, semiColon, tilde, underScore;
 
 
+
     private Password tempPassword = new Password();
+    SecureRandom secRandom = new SecureRandom();
+    Random random = new Random();
     private CheckBox[] boxArray;
 
 
@@ -40,7 +45,7 @@ public class PasswordController implements Initializable {
 
         //instantiating 1 box-array -- populate.
         boxArray = new CheckBox[32];
-        captureUserSymbols();
+        populateBoxArray();
 
         //Text-Formatter to be used on text-fields whose input must only be a number.
         UnaryOperator<TextFormatter.Change> integerFilter = change -> {
@@ -61,7 +66,7 @@ public class PasswordController implements Initializable {
             }
             return null;
         };
-        //declare integer-only TextField
+        //declare integer-only TextField(s)
         passwordLength.setTextFormatter(new TextFormatter<Integer>(new IntegerStringConverter(), tempPassword.getLength(), integerFilter));
 
         /*
@@ -89,7 +94,7 @@ public class PasswordController implements Initializable {
     void generateButton(ActionEvent event) {
         displayString.setText("");
         errorString.setText("");
-        String symbolString = symbolStringCreator(boxArray);
+        String symbolString = tempPassword.captureSymbolString(boxArray);
 
         try {
             //populate object variables
@@ -100,8 +105,8 @@ public class PasswordController implements Initializable {
             tempPassword.setNumberMax(maxNumCount.getValue());
             tempPassword.setSymbolString(symbolString);
 
-            //instantiate new Password object and call function to generate password.
-            String thePassword = tempPassword.passwordCreator(tempPassword);
+            //generate password.
+            String thePassword = passwordCreator();
             displayString.setText(thePassword);
         } catch(Exception ex) {
             displayString.setText("");
@@ -132,11 +137,95 @@ public class PasswordController implements Initializable {
         }
     }
 
+    /**
+     * @return
+     * a string object generated using a StringBuilder.
+     */
+    private String passwordCreator() {
+        String numberString = "1234567890";
+        String lowerString = "abcdefghijklmnopqrstuvwxyz";
+        String upperString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        StringBuilder pw = new StringBuilder();
+
+        boolean repeat = true;
+        while(repeat) {
+            pw.delete(0, tempPassword.getLength());
+            int numCounter = 0, upperCounter = 0, lowerCounter = 0, symbolCounter = 0;
+
+            for(int i=0; i<tempPassword.getLength(); i++) {
+                int switchPick = secRandom.nextInt(3);  //randomize characterType
+                switch(switchPick) {
+                    case 0:
+                        //SYMBOLs
+                        if(symbolCounter < lowerCounter) {
+                            if(!tempPassword.getSymbolString().isEmpty()) {
+                                int res = random.nextInt(tempPassword.getSymbolString().length());
+                                char symbol = tempPassword.getSymbolString().charAt(res);
+
+                                pw.append(symbol);  //appending symbol
+                                symbolCounter++;
+                                break;
+                            }
+                        }
+                    case 1:
+                        //NUMBERs
+                        if(tempPassword.isUsingNumbers()){
+                            if(numCounter < tempPassword.getNumberMax() && numCounter <= lowerCounter) {
+                                int res = random.nextInt(numberString.length());
+                                char number = numberString.charAt(res);
+
+                                pw.append(number);  //appending number
+                                numCounter++;
+                                break;
+                            }
+                        }
+                    case 2:
+                        //UPPERs
+                        if(tempPassword.isUsingUppers()) {
+                            if(upperCounter < tempPassword.getUpperMax() && upperCounter <= lowerCounter) {
+                                int res = random.nextInt(upperString.length());
+                                char upperLetter = upperString.charAt(res);
+
+                                pw.append(upperLetter);  //appending Uppercase Letter
+                                upperCounter++;
+                                break;
+                            }
+                        }
+                    default:
+                        //LOWERs
+                        if(lowerCounter == 0) {
+                            int res = random.nextInt(lowerString.length());
+                            char lowerLetter = lowerString.charAt(res);
+
+                            pw.append(lowerLetter);  //append lowerLetter
+                            lowerCounter++;
+                            break;
+                        }
+                        if(symbolCounter < (lowerCounter * 2.5)){
+                            int res = random.nextInt(lowerString.length());
+                            char lowerLetter = lowerString.charAt(res);
+
+                            pw.append(lowerLetter);  //append lowerLetter
+                            lowerCounter++;
+                        } else {
+                            int res = random.nextInt(tempPassword.getSymbolString().length());
+                            char symbol = tempPassword.getSymbolString().charAt(res);
+
+                            pw.append(symbol);  //append a symbol
+                            symbolCounter++;
+                        }
+                }
+            }
+            //extra security can easily go here...
+            repeat = false;
+        }
+        return pw.toString();
+    }
 
 
-    private void captureUserSymbols() {
+    private void populateBoxArray() {
         /*
-            - to be called on start to populate the boxArray
+            - to be called on start to populate boxArray
         */
         boxArray[0] = tilde;
         boxArray[1] = backQuote;
@@ -171,22 +260,4 @@ public class PasswordController implements Initializable {
         boxArray[30] = fSlash;
         boxArray[31] = apostrophe;
     }  //method to return checkBox variables as checkboxArray
-
-    /**
-     * @return
-     * string of user-desired symbols
-     */
-    private String symbolStringCreator(CheckBox[] theBoxArray) {
-
-        StringBuilder symbols = new StringBuilder();
-
-        for(CheckBox checkBox : theBoxArray) {
-            if(checkBox.isSelected()) {
-                symbols.append(checkBox.getText());
-            }
-        }
-
-
-        return symbols.toString();
-    }
 }
